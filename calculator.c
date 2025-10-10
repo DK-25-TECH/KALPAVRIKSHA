@@ -1,139 +1,160 @@
-#include<stdio.h>
-#include<conio.h>
-#include<ctype.h>
-#include<string.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
-#define n 100
+#define STACK_SIZE 100
 
-int numst[n];                   // DECLARE NUM STACK
-int numtp=-1;
+int numberStack[STACK_SIZE];
+int numberTop = -1;
 
-char opst[n];                 //DECLARE OP STACK
-int optp=-1;
+char operatorStack[STACK_SIZE];
+int operatorTop = -1;
 
-void numpush(int data)
-{
-    numst[++numtp]=data;        //PUSH NUM INTO STACK
-}
-
-int numpop()
-{
-    if(numtp<0)
-    {
-        printf("STACK UNDER-FLOW");       //POP NUM FROM STACK
-        exit(1);
+void pushNumber(int value) {
+    if (numberTop < STACK_SIZE - 1) {
+        numberStack[++numberTop] = value;
+    } else {
+        printf("Number Stack Overflow\n");
     }
-    return numst[numtp--];
 }
 
-void oppush(char ch)
-{
-    opst[++optp]=ch;                //PUSH OPERATOR INTO STACK
-}
-
-char oppop()
-{
-    if(optp<0)
-    {
-        printf("STACK UNDER-FLOW");        //POP OPERATOR INTO STACK
-        exit(1);
+int popNumber(int *error) {
+    int result = 0;
+    if (numberTop < 0) {
+        printf("Number Stack Underflow\n");
+        *error = 1;
+    } else {
+        result = numberStack[numberTop--];
     }
-    return opst[optp--];
+    return result;
 }
 
-int priority(char ch)
-{
-    if(ch=='*' || ch=='/') return 2;
-    if(ch=='+' || ch=='-') return 1;         //MAKE PRIORTITY TO THE OPERATORS
-    return 0;
-}
-
-int calc(int a,int b,char ch,int *er)
-{
-    if(ch=='*') return a*b;
-    if(ch=='+') return a+b;
-    if(ch=='-') return a-b;
-    if(ch=='/')
-    {
-        if(b==0)                            //CALCULATE THE OUTPUT
-        {
-            *er=1;
-            printf("INVALID INPUT\n");
-            return 0;
-        }
-        return a/b;
+void pushOperator(char operatorChar) {
+    if (operatorTop < STACK_SIZE - 1) {
+        operatorStack[++operatorTop] = operatorChar;
+    } else {
+        printf("Operator Stack Overflow\n");
     }
-    return 0;
 }
-int evaluate(char *expression)
-{
-    int er=0,i=0;
-    while(expression[i])
-    {
-        if(isspace(expression[i]))
-        {
-            i++;
-            continue;                            // PERFORM PRECEDENCE PUSH POP OPERATION
-        }
-        
-        if(isdigit(expression[i]))
-        {
-            int x=0;
-            while(isdigit(expression[i]))
-            {
-                x=x*10+(expression[i]-'0');
-                i++;
+
+char popOperator(int *error) {
+    char result = '\0';
+    if (operatorTop < 0) {
+        printf("Operator Stack Underflow\n");
+        *error = 1;
+    } else {
+        result = operatorStack[operatorTop--];
+    }
+    return result;
+}
+
+int priority(char operatorChar) {
+    int priorityValue = 0;
+    switch (operatorChar) {
+        case '*':
+        case '/':
+            priorityValue = 2;
+            break;
+        case '+':
+        case '-':
+            priorityValue = 1;
+            break;
+        default:
+            priorityValue = 0;
+            break;
+    }
+    return priorityValue;
+}
+
+int calculate(int firstValue, int secondValue, char operatorChar, int *error) {
+    int result = 0;
+    switch (operatorChar) {
+        case '*':
+            result = firstValue * secondValue;
+            break;
+        case '+':
+            result = firstValue + secondValue;
+            break;
+        case '-':
+            result = firstValue - secondValue;
+            break;
+        case '/':
+            if (secondValue == 0) {
+                printf("Division by zero not allowed\n");
+                *error = 1;
+            } else {
+                result = firstValue / secondValue;
             }
-            numpush(x);
+            break;
+        default:
+            printf("Invalid Operator\n");
+            *error = 1;
+            break;
+    }
+    return result;
+}
+
+int evaluateExpression(char *expression) {
+    int error = 0;
+    int index = 0;
+    int finalResult = 0;
+
+    while (expression[index] && !error) {
+        if (isspace(expression[index])) {
+            index++;
             continue;
         }
-        
-        if(strchr("*/+-",expression[i]))
-        {
-            while(optp!=-1 && priority(opst[optp])>=priority(expression[i]))
-            {
-                int b=numpop();
-                int a=numpop();
-                char c=oppop();
-                int res=calc(a,b,c,&er);
-                if(er)
-                {
-                    printf("INVALID OPERATION\n");
-                    return 0;
-                }
-                numpush(res);
+
+        if (isdigit(expression[index])) {
+            int currentNumber = 0;
+            while (isdigit(expression[index])) {
+                currentNumber = currentNumber * 10 + (expression[index] - '0');
+                index++;
             }
-            oppush(expression[i]);
-            i++;
+            pushNumber(currentNumber);
             continue;
         }
-        printf("INVALID EXPRESSION\n");
-        return 0;
-    }
-        while(optp!=-1)
-        {
-            int b=numpop();
-            int a=numpop();
-            char ch=oppop();
-            int res=calc(a,b,ch,&er);
-            if(er)
-            {
-                printf("INVALID OPERATION\n");
-                return 0;
+
+        if (strchr("*/+-", expression[index])) {
+            while (operatorTop != -1 && priority(operatorStack[operatorTop]) >= priority(expression[index]) && !error) {
+                int secondValue = popNumber(&error);
+                int firstValue = popNumber(&error);
+                char currentOperator = popOperator(&error);
+                int tempResult = calculate(firstValue, secondValue, currentOperator, &error);
+                pushNumber(tempResult);
             }
-            numpush(res);
+            pushOperator(expression[index]);
+            index++;
+            continue;
         }
 
-        return numst[numtp];
+        printf("Invalid Expression Character: %c\n", expression[index]);
+        error = 1;
+    }
+
+    while (operatorTop != -1 && !error) {
+        int secondValue = popNumber(&error);
+        int firstValue = popNumber(&error);
+        char currentOperator = popOperator(&error);
+        int tempResult = calculate(firstValue, secondValue, currentOperator, &error);
+        pushNumber(tempResult);
+    }
+
+    if (!error && numberTop >= 0) {
+        finalResult = numberStack[numberTop];
+    }
+
+    return error ? 0 : finalResult;
 }
 
-int main()
-{
+int main() {
     char expression[100];
-    printf("ENTER YOUR EXPRESSION\n");
-    fgets(expression,sizeof(expression),stdin);
-     expression[strcspn(expression, "\n")] = '\0';
-     int x=evaluate(expression);
-     printf("%d ",x);
+    printf("Enter Expression: ");
+    fgets(expression, sizeof(expression), stdin);
+    expression[strcspn(expression, "\n")] = '\0';
+
+    int result = evaluateExpression(expression);
+    printf("Result: %d\n", result);
+
+    return 0;
 }
