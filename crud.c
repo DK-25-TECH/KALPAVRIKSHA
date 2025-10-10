@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define userFile "users.txt"
-#define tempFile "temp.txt"
+#define USER_FILE "users.txt"
+#define TEMP_FILE "temp.txt"
 
 typedef struct user {
     int id;
@@ -11,13 +11,21 @@ typedef struct user {
     int age;
 } user;
 
+typedef enum {
+    CREATE = 1,
+    DISPLAY,
+    UPDATE,
+    DELETE,
+    EXIT_PROGRAM
+} Operation;
+
 void createUser();
 void deleteUser();
 void updateUser();
 void displayUser();
 
 void createUser() {
-    FILE *filePtr = fopen(userFile, "a");
+    FILE *filePtr = fopen(USER_FILE, "a");
     if (filePtr == NULL) {
         printf("UNABLE TO OPEN !!\n");
         return;
@@ -38,9 +46,9 @@ void createUser() {
 }
 
 void displayUser() {
-    FILE *filePtr = fopen(userFile, "r");
+    FILE *filePtr = fopen(USER_FILE, "r");
     if (filePtr == NULL) {
-        printf("UNABLE TO OPEN THE FILE");
+        printf("UNABLE TO OPEN THE FILE\n");
         return;
     }
 
@@ -52,9 +60,9 @@ void displayUser() {
 }
 
 void updateUser() {
-    FILE *filePtr = fopen(userFile, "r");
+    FILE *filePtr = fopen(USER_FILE, "r");
     if (filePtr == NULL) {
-        printf("UNABLE TO OPEN THE FILE");
+        printf("UNABLE TO OPEN THE FILE\n");
         return;
     }
 
@@ -63,9 +71,9 @@ void updateUser() {
     scanf("%d", &id);
     user user;
 
-    FILE *tempPtr = fopen(tempFile, "w");
+    FILE *tempPtr = fopen(TEMP_FILE, "w");
     if (tempPtr == NULL) {
-        printf("UNABLE TO CREATE FILE");
+        printf("UNABLE TO CREATE FILE\n");
         fclose(filePtr);
         return;
     }
@@ -82,8 +90,8 @@ void updateUser() {
     }
     fclose(filePtr);
     fclose(tempPtr);
-    remove(userFile);
-    rename(tempFile, userFile);
+    remove(USER_FILE);
+    rename(TEMP_FILE, USER_FILE);
 
     if (found) {
         printf("UPDATED SUCCESSFULLY\n");
@@ -93,9 +101,9 @@ void updateUser() {
 }
 
 void deleteUser() {
-    FILE *filePtr = fopen(userFile, "r");
+    FILE *filePtr = fopen(USER_FILE, "r");
     if (filePtr == NULL) {
-        printf("UNABLE TO OPEN FILE");
+        printf("UNABLE TO OPEN FILE\n");
         return;
     }
 
@@ -104,9 +112,9 @@ void deleteUser() {
     scanf("%d", &id);
 
     user user;
-    FILE *tempPtr = fopen(tempFile, "w");
+    FILE *tempPtr = fopen(TEMP_FILE, "w");
     if (tempPtr == NULL) {
-        printf("UNABLE TO CREATE FILE");
+        printf("UNABLE TO CREATE FILE\n");
         fclose(filePtr);
         return;
     }
@@ -120,8 +128,8 @@ void deleteUser() {
     }
     fclose(filePtr);
     fclose(tempPtr);
-    remove(userFile);
-    rename(tempFile, userFile);
+    remove(USER_FILE);
+    rename(TEMP_FILE, USER_FILE);
 
     if (found) {
         printf("DELETED SUCCESSFULLY\n");
@@ -131,33 +139,31 @@ void deleteUser() {
 }
 
 int main() {
-    int choice;
-    FILE *filePtr;
+    Operation choice;
 
-    filePtr = fopen(userFile, "a");
+    FILE *filePtr = fopen(USER_FILE, "a");
     if (filePtr == NULL) {
-        printf("ERROR NOT FOUND");
+        printf("ERROR NOT FOUND\n");
         return 1;
     }
     fclose(filePtr);
 
     while (1) {
         printf("USER MANAGEMENT SYSTEM \n");
-        printf("1. ADD USER \n");
-        printf("2. DISPLAY USERS \n");
-        printf("3. UPDATE BY ID \n");
-        printf("4. DELETE BY ID \n");
-        printf("5. EXIT \n");
-        printf("\n");
-        printf("ENTER YOUR CHOICE : \n");
+        printf("%d. ADD USER \n", CREATE);
+        printf("%d. DISPLAY USERS \n", DISPLAY);
+        printf("%d. UPDATE BY ID \n", UPDATE);
+        printf("%d. DELETE BY ID \n", DELETE);
+        printf("%d. EXIT \n", EXIT_PROGRAM);
+        printf("\nENTER YOUR CHOICE : \n");
         scanf("%d", &choice);
 
         switch (choice) {
-            case 1: createUser(); break;
-            case 2: displayUser(); break;
-            case 3: updateUser(); break;
-            case 4: deleteUser(); break;
-            case 5: exit(0);
+            case CREATE: createUser(); break;
+            case DISPLAY: displayUser(); break;
+            case UPDATE: updateUser(); break;
+            case DELETE: deleteUser(); break;
+            case EXIT_PROGRAM: exit(0);
             default: printf("INVALID CHOICE\n");
         }
     }
