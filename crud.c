@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<stdbool.h>
 
 #define USER_FILE "users.txt"
 #define TEMP_FILE "temp.txt"
@@ -140,15 +141,16 @@ void deleteUser() {
 
 int main() {
     Operation choice;
+    bool start = true;
 
     FILE *filePtr = fopen(USER_FILE, "a");
     if (filePtr == NULL) {
         printf("ERROR NOT FOUND\n");
-        return 1;
+    } else {
+        fclose(filePtr);
     }
-    fclose(filePtr);
 
-    while (1) {
+    while (start) {
         printf("USER MANAGEMENT SYSTEM \n");
         printf("%d. ADD USER \n", CREATE);
         printf("%d. DISPLAY USERS \n", DISPLAY);
@@ -163,9 +165,8 @@ int main() {
             case DISPLAY: displayUser(); break;
             case UPDATE: updateUser(); break;
             case DELETE: deleteUser(); break;
-            case EXIT_PROGRAM: exit(0);
+            case EXIT_PROGRAM: start = false; break;
             default: printf("INVALID CHOICE\n");
         }
     }
-    return 0;
 }
