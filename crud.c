@@ -6,13 +6,15 @@
 #define USER_FILE "users.txt"
 #define TEMP_FILE "temp.txt"
 
-typedef struct user {
+typedef struct User
+{
     int id;
     char name[100];
     int age;
-} user;
+} User;
 
-typedef enum {
+typedef enum 
+{
     CREATE = 1,
     DISPLAY,
     UPDATE,
@@ -32,7 +34,7 @@ void createUser() {
         return;
     }
 
-    user user;
+    User user;
     printf("ENTER USER ID : ");
     scanf("%d", &user.id);
     printf("ENTER USER-NAME : ");
@@ -46,21 +48,23 @@ void createUser() {
     printf("USER ADDED TO THE FILE SUCCESSFULLY\n");
 }
 
-void displayUser() {
+void displayUser() 
+{
     FILE *filePtr = fopen(USER_FILE, "r");
     if (filePtr == NULL) {
         printf("UNABLE TO OPEN THE FILE\n");
         return;
     }
 
-    user user;
+    User user;
     while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
         printf("%d %s %d\n", user.id, user.name, user.age);
     }
     fclose(filePtr);
 }
 
-void updateUser() {
+void updateUser() 
+{
     FILE *filePtr = fopen(USER_FILE, "r");
     if (filePtr == NULL) {
         printf("UNABLE TO OPEN THE FILE\n");
@@ -70,7 +74,7 @@ void updateUser() {
     int id, found = 0;
     printf("ENTER USER ID : ");
     scanf("%d", &id);
-    user user;
+    User user;
 
     FILE *tempPtr = fopen(TEMP_FILE, "w");
     if (tempPtr == NULL) {
@@ -101,7 +105,8 @@ void updateUser() {
     }
 }
 
-void deleteUser() {
+void deleteUser() 
+{
     FILE *filePtr = fopen(USER_FILE, "r");
     if (filePtr == NULL) {
         printf("UNABLE TO OPEN FILE\n");
@@ -112,7 +117,7 @@ void deleteUser() {
     printf("ENTER ID TO DELETE : ");
     scanf("%d", &id);
 
-    user user;
+    User user;
     FILE *tempPtr = fopen(TEMP_FILE, "w");
     if (tempPtr == NULL) {
         printf("UNABLE TO CREATE FILE\n");
@@ -139,7 +144,8 @@ void deleteUser() {
     }
 }
 
-int main() {
+int main() 
+{
     Operation choice;
     bool start = true;
 
@@ -151,13 +157,13 @@ int main() {
     }
 
     while (start) {
-        printf("USER MANAGEMENT SYSTEM \n");
-        printf("%d. ADD USER \n", CREATE);
-        printf("%d. DISPLAY USERS \n", DISPLAY);
-        printf("%d. UPDATE BY ID \n", UPDATE);
-        printf("%d. DELETE BY ID \n", DELETE);
-        printf("%d. EXIT \n", EXIT_PROGRAM);
-        printf("\nENTER YOUR CHOICE : \n");
+        printf("\nUSER MANAGEMENT SYSTEM\n");
+        printf("%d. ADD USER\n", CREATE);
+        printf("%d. DISPLAY USERS\n", DISPLAY);
+        printf("%d. UPDATE BY ID\n", UPDATE);
+        printf("%d. DELETE BY ID\n", DELETE);
+        printf("%d. EXIT\n", EXIT_PROGRAM);
+        printf("ENTER YOUR CHOICE: ");
         scanf("%d", &choice);
 
         switch (choice) {
@@ -169,4 +175,9 @@ int main() {
             default: printf("INVALID CHOICE\n");
         }
     }
+
+    return 0;
 }
+
+
+mate is this all the necessary changes
