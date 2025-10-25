@@ -1,189 +1,86 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 
-#define userFile "users.txt"
-#define tempFile "temp.txt"
+typedef struct Student {
+    int rollNo;
+    char name[25];
+    int mark1, mark2, mark3;
+} Student;
 
-typedef struct User {
-    int id;
-    char name[100];
-    int age;
-} User;
-
-typedef enum CrudOperation {
-    ADD_USER = 1,
-    DISPLAY_USERS,
-    UPDATE_USER,
-    DELETE_USER,
-    EXIT_PROGRAM
-} CrudOperation;
-
-FILE* openFile(const char *filename, const char *mode);
-void closeFile(FILE *filePtr);
-void createUser();
-void displayUsers();
-void updateUser();
-void deleteUser();
-
-FILE* openFile(const char *filename, const char *mode) {
-    FILE *filePtr = fopen(filename, mode);
-    if (filePtr == NULL) {
-        printf("Unable to open file: %s\n", filename);
-    }
-    return filePtr;
+char calculateGrade(float average) {
+    char grade = 'F';
+    if (average >= 85) grade = 'A';
+    else if (average >= 70) grade = 'B';
+    else if (average >= 50) grade = 'C';
+    else if (average >= 35) grade = 'D';
+    return grade;
 }
 
-void closeFile(FILE *filePtr) {
-    if (filePtr != NULL) {
-        fclose(filePtr);
+void displayPerformance(char grade) {
+    switch (grade) {
+        case 'A': printf("PERFORMANCE : *****\n"); break;
+        case 'B': printf("PERFORMANCE : ****\n"); break;
+        case 'C': printf("PERFORMANCE : ***\n"); break;
+        case 'D': printf("PERFORMANCE : **\n"); break;
+        default:  printf("PERFORMANCE : FAIL\n"); break;
     }
 }
 
-void createUser() {
-    FILE *filePtr = openFile(userFile, "a");
-    if (filePtr == NULL) return;
+void showProgress(Student s, char (*gradePtr)(float), void (*starPtr)(char)) {
+    int total = s.mark1 + s.mark2 + s.mark3;
+    float average = total / 3.0f;
+    char grade = gradePtr(average);
 
-    User newUser;
-    printf("Enter User ID: ");
-    scanf("%d", &newUser.id);
-    printf("Enter User Name: ");
-    scanf("%s", newUser.name);
-    printf("Enter User Age: ");
-    scanf("%d", &newUser.age);
-
-    fprintf(filePtr, "%d %s %d\n", newUser.id, newUser.name, newUser.age);
-    closeFile(filePtr);
-
-    printf("User added successfully.\n");
+    printf("\nROLL NO: %d\nNAME: %s\nTOTAL MARKS: %d\nAVERAGE MARKS: %.2f\nGRADE: %c\n",
+           s.rollNo, s.name, total, average, grade);
+    starPtr(grade);
 }
 
-void displayUsers() {
-    FILE *filePtr = openFile(userFile, "r");
-    if (filePtr == NULL) return;
-
-    User user;
-    printf("\n------ User List ------\n");
-    while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
-        printf("ID: %d | Name: %s | Age: %d\n", user.id, user.name, user.age);
+void readStudents(Student *students, int n) {
+    for (int i = 0; i < n; i++) {
+        printf("Enter roll no, name, marks1, marks2, marks3 for student %d: ", i + 1);
+        scanf("%d %24s %d %d %d",
+              &students[i].rollNo,
+              students[i].name,
+              &students[i].mark1,
+              &students[i].mark2,
+              &students[i].mark3);
     }
-    closeFile(filePtr);
 }
 
-void updateUser() {
-    FILE *filePtr = openFile(userFile, "r");
-    if (filePtr == NULL) return;
-
-    FILE *tempPtr = openFile(tempFile, "w");
-    if (tempPtr == NULL) {
-        closeFile(filePtr);
-        return;
-    }
-
-    int userId;
-    bool found = false;
-    printf("Enter User ID to Update: ");
-    scanf("%d", &userId);
-
-    User user;
-    while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
-        if (user.id == userId) {
-            found = true;
-            printf("Enter New User Name: ");
-            scanf("%s", user.name);
-            printf("Enter New User Age: ");
-            scanf("%d", &user.age);
-        }
-        fprintf(tempPtr, "%d %s %d\n", user.id, user.name, user.age);
-    }
-
-    closeFile(filePtr);
-    closeFile(tempPtr);
-    remove(userFile);
-    rename(tempFile, userFile);
-
-    if (found)
-        printf("User updated successfully.\n");
-    else
-        printf("User ID not found.\n");
-}
-
-void deleteUser() {
-    FILE *filePtr = openFile(userFile, "r");
-    if (filePtr == NULL) return;
-
-    FILE *tempPtr = openFile(tempFile, "w");
-    if (tempPtr == NULL) {
-        closeFile(filePtr);
-        return;
-    }
-
-    int userId;
-    bool found = false;
-    printf("Enter User ID to Delete: ");
-    scanf("%d", &userId);
-
-    User user;
-    while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
-        if (user.id == userId) {
-            found = true;
-            continue;
-        }
-        fprintf(tempPtr, "%d %s %d\n", user.id, user.name, user.age);
-    }
-
-    closeFile(filePtr);
-    closeFile(tempPtr);
-    remove(userFile);
-    rename(tempFile, userFile);
-
-    if (found)
-        printf("User deleted successfully.\n");
-    else
-        printf("User not found.\n");
+void printRollNumbers(Student students[], int index, int n) {
+    if (index >= n) return;
+    printf("%d ", students[index].rollNo);
+    printRollNumbers(students, index + 1, n);
 }
 
 int main() {
-    bool start = true;
-    int userChoice;
+    int n;
+    int exitCode = 0;
+    printf("Enter number of students: ");
+    scanf("%d", &n);
 
-    FILE *initFile = openFile(userFile, "a");
-    closeFile(initFile);
+    Student *students = malloc(n * sizeof(Student));
 
-    while (start) {
-        printf("\n====== USER MANAGEMENT SYSTEM ======\n");
-        printf("%d. Add User\n", ADD_USER);
-        printf("%d. Display Users\n", DISPLAY_USERS);
-        printf("%d. Update User by ID\n", UPDATE_USER);
-        printf("%d. Delete User by ID\n", DELETE_USER);
-        printf("%d. Exit\n", EXIT_PROGRAM);
-        printf("Enter your choice: ");
-        scanf("%d", &userChoice);
+    if (students) {
+        readStudents(students, n);
 
-        CrudOperation operation = (CrudOperation)userChoice;
+        printf("\n-- STUDENT ROLL NUMBERS --\n");
+        printRollNumbers(students, 0, n);
+        printf("\n");
 
-        switch (operation) {
-            case ADD_USER:
-                createUser();
-                break;
-            case DISPLAY_USERS:
-                displayUsers();
-                break;
-            case UPDATE_USER:
-                updateUser();
-                break;
-            case DELETE_USER:
-                deleteUser();
-                break;
-            case EXIT_PROGRAM:
-                start = false;
-                printf("Exiting the program.\n");
-                break;
-            default:
-                printf("Invalid choice. Please try again.\n");
+        char (*gradePtr)(float) = calculateGrade;
+        void (*starPtr)(char) = displayPerformance;
+
+        for (int i = 0; i < n; i++) {
+            showProgress(students[i], gradePtr, starPtr);
         }
+
+        free(students);
+    } else {
+        printf("Memory Allocation Failed!\n");
+        exitCode = 1;
     }
 
-    return 0;
+    return exitCode;
 }
