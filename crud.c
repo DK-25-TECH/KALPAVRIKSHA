@@ -1,183 +1,189 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
-#define USER_FILE "users.txt"
-#define TEMP_FILE "temp.txt"
+#define userFile "users.txt"
+#define tempFile "temp.txt"
 
-typedef struct User
-{
+typedef struct User {
     int id;
     char name[100];
     int age;
 } User;
 
-typedef enum 
-{
-    CREATE = 1,
-    DISPLAY,
-    UPDATE,
-    DELETE,
+typedef enum CrudOperation {
+    ADD_USER = 1,
+    DISPLAY_USERS,
+    UPDATE_USER,
+    DELETE_USER,
     EXIT_PROGRAM
-} Operation;
+} CrudOperation;
 
+FILE* openFile(const char *filename, const char *mode);
+void closeFile(FILE *filePtr);
 void createUser();
-void deleteUser();
+void displayUsers();
 void updateUser();
-void displayUser();
+void deleteUser();
+
+FILE* openFile(const char *filename, const char *mode) {
+    FILE *filePtr = fopen(filename, mode);
+    if (filePtr == NULL) {
+        printf("Unable to open file: %s\n", filename);
+    }
+    return filePtr;
+}
+
+void closeFile(FILE *filePtr) {
+    if (filePtr != NULL) {
+        fclose(filePtr);
+    }
+}
 
 void createUser() {
-    FILE *filePtr = fopen(USER_FILE, "a");
-    if (filePtr == NULL) {
-        printf("UNABLE TO OPEN !!\n");
-        return;
-    }
+    FILE *filePtr = openFile(userFile, "a");
+    if (filePtr == NULL) return;
 
-    User user;
-    printf("ENTER USER ID : ");
-    scanf("%d", &user.id);
-    printf("ENTER USER-NAME : ");
-    scanf("%s", user.name);
-    printf("ENTER USER AGE : ");
-    scanf("%d", &user.age);
+    User newUser;
+    printf("Enter User ID: ");
+    scanf("%d", &newUser.id);
+    printf("Enter User Name: ");
+    scanf("%s", newUser.name);
+    printf("Enter User Age: ");
+    scanf("%d", &newUser.age);
 
-    fprintf(filePtr, "%d %s %d\n", user.id, user.name, user.age);
-    fclose(filePtr);
+    fprintf(filePtr, "%d %s %d\n", newUser.id, newUser.name, newUser.age);
+    closeFile(filePtr);
 
-    printf("USER ADDED TO THE FILE SUCCESSFULLY\n");
+    printf("User added successfully.\n");
 }
 
-void displayUser() 
-{
-    FILE *filePtr = fopen(USER_FILE, "r");
-    if (filePtr == NULL) {
-        printf("UNABLE TO OPEN THE FILE\n");
-        return;
-    }
+void displayUsers() {
+    FILE *filePtr = openFile(userFile, "r");
+    if (filePtr == NULL) return;
 
     User user;
+    printf("\n------ User List ------\n");
     while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
-        printf("%d %s %d\n", user.id, user.name, user.age);
+        printf("ID: %d | Name: %s | Age: %d\n", user.id, user.name, user.age);
     }
-    fclose(filePtr);
+    closeFile(filePtr);
 }
 
-void updateUser() 
-{
-    FILE *filePtr = fopen(USER_FILE, "r");
-    if (filePtr == NULL) {
-        printf("UNABLE TO OPEN THE FILE\n");
-        return;
-    }
+void updateUser() {
+    FILE *filePtr = openFile(userFile, "r");
+    if (filePtr == NULL) return;
 
-    int id, found = 0;
-    printf("ENTER USER ID : ");
-    scanf("%d", &id);
-    User user;
-
-    FILE *tempPtr = fopen(TEMP_FILE, "w");
+    FILE *tempPtr = openFile(tempFile, "w");
     if (tempPtr == NULL) {
-        printf("UNABLE TO CREATE FILE\n");
-        fclose(filePtr);
+        closeFile(filePtr);
         return;
     }
 
+    int userId;
+    bool found = false;
+    printf("Enter User ID to Update: ");
+    scanf("%d", &userId);
+
+    User user;
     while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
-        if (user.id == id) {
-            found = 1;
-            printf("ENTER NEW USER-NAME : ");
+        if (user.id == userId) {
+            found = true;
+            printf("Enter New User Name: ");
             scanf("%s", user.name);
-            printf("ENTER NEW USER AGE : ");
+            printf("Enter New User Age: ");
             scanf("%d", &user.age);
         }
         fprintf(tempPtr, "%d %s %d\n", user.id, user.name, user.age);
     }
-    fclose(filePtr);
-    fclose(tempPtr);
-    remove(USER_FILE);
-    rename(TEMP_FILE, USER_FILE);
 
-    if (found) {
-        printf("UPDATED SUCCESSFULLY\n");
-    } else {
-        printf("ID NOT FOUND\n");
-    }
+    closeFile(filePtr);
+    closeFile(tempPtr);
+    remove(userFile);
+    rename(tempFile, userFile);
+
+    if (found)
+        printf("User updated successfully.\n");
+    else
+        printf("User ID not found.\n");
 }
 
-void deleteUser() 
-{
-    FILE *filePtr = fopen(USER_FILE, "r");
-    if (filePtr == NULL) {
-        printf("UNABLE TO OPEN FILE\n");
+void deleteUser() {
+    FILE *filePtr = openFile(userFile, "r");
+    if (filePtr == NULL) return;
+
+    FILE *tempPtr = openFile(tempFile, "w");
+    if (tempPtr == NULL) {
+        closeFile(filePtr);
         return;
     }
 
-    int id, found = 0;
-    printf("ENTER ID TO DELETE : ");
-    scanf("%d", &id);
+    int userId;
+    bool found = false;
+    printf("Enter User ID to Delete: ");
+    scanf("%d", &userId);
 
     User user;
-    FILE *tempPtr = fopen(TEMP_FILE, "w");
-    if (tempPtr == NULL) {
-        printf("UNABLE TO CREATE FILE\n");
-        fclose(filePtr);
-        return;
-    }
-
     while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
-        if (user.id == id) {
-            found = 1;
+        if (user.id == userId) {
+            found = true;
             continue;
         }
         fprintf(tempPtr, "%d %s %d\n", user.id, user.name, user.age);
     }
-    fclose(filePtr);
-    fclose(tempPtr);
-    remove(USER_FILE);
-    rename(TEMP_FILE, USER_FILE);
 
-    if (found) {
-        printf("DELETED SUCCESSFULLY\n");
-    } else {
-        printf("USER NOT FOUND\n");
-    }
+    closeFile(filePtr);
+    closeFile(tempPtr);
+    remove(userFile);
+    rename(tempFile, userFile);
+
+    if (found)
+        printf("User deleted successfully.\n");
+    else
+        printf("User not found.\n");
 }
 
-int main() 
-{
-    Operation choice;
+int main() {
     bool start = true;
+    int userChoice;
 
-    FILE *filePtr = fopen(USER_FILE, "a");
-    if (filePtr == NULL) {
-        printf("ERROR NOT FOUND\n");
-    } else {
-        fclose(filePtr);
-    }
+    FILE *initFile = openFile(userFile, "a");
+    closeFile(initFile);
 
     while (start) {
-        printf("\nUSER MANAGEMENT SYSTEM\n");
-        printf("%d. ADD USER\n", CREATE);
-        printf("%d. DISPLAY USERS\n", DISPLAY);
-        printf("%d. UPDATE BY ID\n", UPDATE);
-        printf("%d. DELETE BY ID\n", DELETE);
-        printf("%d. EXIT\n", EXIT_PROGRAM);
-        printf("ENTER YOUR CHOICE: ");
-        scanf("%d", &choice);
+        printf("\n====== USER MANAGEMENT SYSTEM ======\n");
+        printf("%d. Add User\n", ADD_USER);
+        printf("%d. Display Users\n", DISPLAY_USERS);
+        printf("%d. Update User by ID\n", UPDATE_USER);
+        printf("%d. Delete User by ID\n", DELETE_USER);
+        printf("%d. Exit\n", EXIT_PROGRAM);
+        printf("Enter your choice: ");
+        scanf("%d", &userChoice);
 
-        switch (choice) {
-            case CREATE: createUser(); break;
-            case DISPLAY: displayUser(); break;
-            case UPDATE: updateUser(); break;
-            case DELETE: deleteUser(); break;
-            case EXIT_PROGRAM: start = false; break;
-            default: printf("INVALID CHOICE\n");
+        CrudOperation operation = (CrudOperation)userChoice;
+
+        switch (operation) {
+            case ADD_USER:
+                createUser();
+                break;
+            case DISPLAY_USERS:
+                displayUsers();
+                break;
+            case UPDATE_USER:
+                updateUser();
+                break;
+            case DELETE_USER:
+                deleteUser();
+                break;
+            case EXIT_PROGRAM:
+                start = false;
+                printf("Exiting the program.\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
         }
     }
 
     return 0;
 }
-
-
-mate is this all the necessary changes
