@@ -1,116 +1,189 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
-struct student
-{ 
-    int rollNo;
-    char name[25];
-    int mark1, mark2, mark3;  
-};
+#define userFile "users.txt"
+#define tempFile "temp.txt"
 
-char gradeCalc(float avg)
-{ 
-    char grade;
+typedef struct User {
+    int id;
+    char name[100];
+    int age;
+} User;
 
-    if (avg >= 85)
-        grade = 'A';
-    else if (avg >= 70)
-        grade = 'B';
-    else if (avg >= 50)
-        grade = 'C';
-    else if (avg >= 35)
-        grade = 'D';
-    else
-        grade = 'F';
-    
-    return grade;
-} 
+typedef enum CrudOperation {
+    ADD_USER = 1,
+    DISPLAY_USERS,
+    UPDATE_USER,
+    DELETE_USER,
+    EXIT_PROGRAM
+} CrudOperation;
 
-void printStars(char grade) 
-{
-    switch(grade)
-    { 
-        case 'A':
-            printf("PERFORMANCE : *****\n");
-            break; 
-        
-        case 'B':
-            printf("PERFORMANCE : ****\n");
-            break; 
-        
-        case 'C':
-            printf("PERFORMANCE : ***\n"); 
-            break;
-        
-        case 'D': 
-            printf("PERFORMANCE : **\n");
-            break;
-        
-        default:
-            printf("PERFORMANCE : FAIL\n");
-            break;
+FILE* openFile(const char *filename, const char *mode);
+void closeFile(FILE *filePtr);
+void createUser();
+void displayUsers();
+void updateUser();
+void deleteUser();
+
+FILE* openFile(const char *filename, const char *mode) {
+    FILE *filePtr = fopen(filename, mode);
+    if (filePtr == NULL) {
+        printf("Unable to open file: %s\n", filename);
+    }
+    return filePtr;
+}
+
+void closeFile(FILE *filePtr) {
+    if (filePtr != NULL) {
+        fclose(filePtr);
     }
 }
 
-void progressCalculator(struct student s, char (*gradeFptr)(float), void (*starFptr)(char)) 
-{ 
-    int total = s.mark1 + s.mark2 + s.mark3;
-    float avg = total / 3.0;
-    char grade = gradeFptr(avg);
-    
-    printf("\nROLL_NO : %d \nNAME : %s\nTOTAL-MARKS : %d \nAVERAGE-MARKS : %.2f\nGRADE : %c\n",
-           s.rollNo, s.name, total, avg, grade);
-    
-    starFptr(grade);
+void createUser() {
+    FILE *filePtr = openFile(userFile, "a");
+    if (filePtr == NULL) return;
+
+    User newUser;
+    printf("Enter User ID: ");
+    scanf("%d", &newUser.id);
+    printf("Enter User Name: ");
+    scanf("%s", newUser.name);
+    printf("Enter User Age: ");
+    scanf("%d", &newUser.age);
+
+    fprintf(filePtr, "%d %s %d\n", newUser.id, newUser.name, newUser.age);
+    closeFile(filePtr);
+
+    printf("User added successfully.\n");
 }
 
-void inputStudents(struct student *s, int n)
-{
-    for (int index = 0; index < n; index++)
-    { 
-        scanf("%d %s %d %d %d",
-              &s[index].rollNo,
-              s[index].name,
-              &s[index].mark1,
-              &s[index].mark2,
-              &s[index].mark3);
+void displayUsers() {
+    FILE *filePtr = openFile(userFile, "r");
+    if (filePtr == NULL) return;
+
+    User user;
+    printf("\n------ User List ------\n");
+    while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
+        printf("ID: %d | Name: %s | Age: %d\n", user.id, user.name, user.age);
     }
+    closeFile(filePtr);
 }
 
-void printRollNumbers(struct student s[], int index, int n)
-{
-    if (index == n)
+void updateUser() {
+    FILE *filePtr = openFile(userFile, "r");
+    if (filePtr == NULL) return;
+
+    FILE *tempPtr = openFile(tempFile, "w");
+    if (tempPtr == NULL) {
+        closeFile(filePtr);
         return;
+    }
 
-    printf("%d ", s[index].rollNo);
-    printRollNumbers(s, index + 1, n);
+    int userId;
+    bool found = false;
+    printf("Enter User ID to Update: ");
+    scanf("%d", &userId);
+
+    User user;
+    while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
+        if (user.id == userId) {
+            found = true;
+            printf("Enter New User Name: ");
+            scanf("%s", user.name);
+            printf("Enter New User Age: ");
+            scanf("%d", &user.age);
+        }
+        fprintf(tempPtr, "%d %s %d\n", user.id, user.name, user.age);
+    }
+
+    closeFile(filePtr);
+    closeFile(tempPtr);
+    remove(userFile);
+    rename(tempFile, userFile);
+
+    if (found)
+        printf("User updated successfully.\n");
+    else
+        printf("User ID not found.\n");
 }
 
-int main() 
-{ 
-    int n;
-    scanf("%d", &n);
-    
-    struct student *s = (struct student *) malloc(n * sizeof(struct student));
-    if (s == NULL) {
-        printf("Memory Allocation Failed!\n");
-        return 1;
+void deleteUser() {
+    FILE *filePtr = openFile(userFile, "r");
+    if (filePtr == NULL) return;
+
+    FILE *tempPtr = openFile(tempFile, "w");
+    if (tempPtr == NULL) {
+        closeFile(filePtr);
+        return;
     }
-    
-    inputStudents(s, n);
-    
-    printf("\n-- STUDENT ROLL NUMBERS --\n");
-    printRollNumbers(s, 0, n);
-    printf("\n");
-    
-    char (*gradeFptr)(float) = gradeCalc;
-    void (*starFptr)(char) = printStars;
-    
-    for (int index = 0; index < n; index++) 
-    {
-        progressCalculator(s[index], gradeFptr, starFptr);
+
+    int userId;
+    bool found = false;
+    printf("Enter User ID to Delete: ");
+    scanf("%d", &userId);
+
+    User user;
+    while (fscanf(filePtr, "%d %s %d", &user.id, user.name, &user.age) == 3) {
+        if (user.id == userId) {
+            found = true;
+            continue;
+        }
+        fprintf(tempPtr, "%d %s %d\n", user.id, user.name, user.age);
     }
-    
-    free(s);
+
+    closeFile(filePtr);
+    closeFile(tempPtr);
+    remove(userFile);
+    rename(tempFile, userFile);
+
+    if (found)
+        printf("User deleted successfully.\n");
+    else
+        printf("User not found.\n");
+}
+
+int main() {
+    bool start = true;
+    int userChoice;
+
+    FILE *initFile = openFile(userFile, "a");
+    closeFile(initFile);
+
+    while (start) {
+        printf("\n====== USER MANAGEMENT SYSTEM ======\n");
+        printf("%d. Add User\n", ADD_USER);
+        printf("%d. Display Users\n", DISPLAY_USERS);
+        printf("%d. Update User by ID\n", UPDATE_USER);
+        printf("%d. Delete User by ID\n", DELETE_USER);
+        printf("%d. Exit\n", EXIT_PROGRAM);
+        printf("Enter your choice: ");
+        scanf("%d", &userChoice);
+
+        CrudOperation operation = (CrudOperation)userChoice;
+
+        switch (operation) {
+            case ADD_USER:
+                createUser();
+                break;
+            case DISPLAY_USERS:
+                displayUsers();
+                break;
+            case UPDATE_USER:
+                updateUser();
+                break;
+            case DELETE_USER:
+                deleteUser();
+                break;
+            case EXIT_PROGRAM:
+                start = false;
+                printf("Exiting the program.\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    }
+
     return 0;
 }
