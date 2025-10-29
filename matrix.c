@@ -1,88 +1,84 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void rotate90Degree(int **matrix, int matrixSize);
-void displayMatrix(int **matrix, int matrixSize);
-void applySmoothing(int **matrix, int matrixSize);
+int **initialize_matrix(const int size);
+void display_matrix(int **matrix, const int size);
+void rotate_90_degree(int **matrix, const int size);
+void apply_smoothing(int **matrix, const int size);
+void free_matrix(int **matrix, const int size);
 
-int main() {
-    int matrixSize;
-    printf("Enter the size of the matrix: \n");
-    scanf("%d", &matrixSize);
-
-    if (matrixSize < 2 || matrixSize > 10) {
-        printf("Invalid size.\n");
-        return 1;
+int **initialize_matrix(const int size)
+{
+    int **matrix = (int **) malloc(size * sizeof(int *));
+    if (matrix == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
     }
 
-    int **matrix = (int **)malloc(matrixSize * sizeof(int *));
-    for (int i = 0; i < matrixSize; i++) {
-        matrix[i] = (int *)malloc(matrixSize * sizeof(int));
-    }
+    for (int row = 0; row < size; row++) {
+        matrix[row] = (int *) malloc(size * sizeof(int));
+        if (matrix[row] == NULL) {
+            printf("Memory allocation failed\n");
+            exit(1);
+        }
 
-    for (int i = 0; i < matrixSize; i++) {
-        for (int j = 0; j < matrixSize; j++) {
-            matrix[i][j] = rand() % 256;
+        for (int col = 0; col < size; col++) {
+            matrix[row][col] = rand() % 256;
         }
     }
-
-    displayMatrix(matrix, matrixSize);
-    rotate90Degree(matrix, matrixSize);
-    displayMatrix(matrix, matrixSize);
-    applySmoothing(matrix, matrixSize);
-    displayMatrix(matrix, matrixSize);
-
-    for (int i = 0; i < matrixSize; i++) {
-        free(matrix[i]);
-    }
-    free(matrix);
-
-    return 0;
+    return matrix;
 }
 
-void rotate90Degree(int **matrix, int matrixSize) {
-    for (int row = 0; row < matrixSize; row++) {
-        for (int col = row; col < matrixSize; col++) {
-            int temp = matrix[row][col];
-            matrix[row][col] = matrix[col][row];
-            matrix[col][row] = temp;
-        }
-    }
-
-    for (int row = 0; row < matrixSize; row++) {
-        for (int col = 0; col < matrixSize / 2; col++) {
-            int temp = matrix[row][col];
-            matrix[row][col] = matrix[row][matrixSize - 1 - col];
-            matrix[row][matrixSize - 1 - col] = temp;
-        }
-    }
-}
-
-void displayMatrix(int **matrix, int matrixSize) {
-    for (int i = 0; i < matrixSize; i++) {
-        for (int j = 0; j < matrixSize; j++) {
-            printf("%d ", matrix[i][j]);
+void display_matrix(int **matrix, const int size)
+{
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            printf("%3d ", matrix[row][col]);
         }
         printf("\n");
     }
     printf("\n");
 }
 
-void applySmoothing(int **matrix, int matrixSize) {
-    int *previousRow = (int *)malloc(matrixSize * sizeof(int));
+void rotate_90_degree(int **matrix, const int size)
+{
+    for (int row = 0; row < size; row++) {
+        for (int col = row; col < size; col++) {
+            int temp = matrix[row][col];
+            matrix[row][col] = matrix[col][row];
+            matrix[col][row] = temp;
+        }
+    }
 
-    for (int row = 0; row < matrixSize; row++) {
-        for (int col = 0; col < matrixSize; col++) {
-            previousRow[col] = matrix[row][col];
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size / 2; col++) {
+            int temp = matrix[row][col];
+            matrix[row][col] = matrix[row][size - 1 - col];
+            matrix[row][size - 1 - col] = temp;
+        }
+    }
+}
+
+void apply_smoothing(int **matrix, const int size)
+{
+    int *row_copy = (int *) malloc(size * sizeof(int));
+    if (row_copy == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            row_copy[col] = matrix[row][col];
         }
 
-        for (int col = 0; col < matrixSize; col++) {
+        for (int col = 0; col < size; col++) {
             int sum = 0, count = 0;
 
-            for (int i = row - 1; i <= row + 1; i++) {
-                for (int j = col - 1; j <= col + 1; j++) {
-                    if (i >= 0 && i < matrixSize && j >= 0 && j < matrixSize) {
-                        sum += (i == row) ? previousRow[j] : matrix[i][j];
+            for (int r = row - 1; r <= row + 1; r++) {
+                for (int c = col - 1; c <= col + 1; c++) {
+                    if (r >= 0 && r < size && c >= 0 && c < size) {
+                        sum += (r == row) ? row_copy[c] : matrix[r][c];
                         count++;
                     }
                 }
@@ -91,5 +87,42 @@ void applySmoothing(int **matrix, int matrixSize) {
         }
     }
 
-    free(previousRow);
+    free(row_copy);
+}
+
+void free_matrix(int **matrix, const int size)
+{
+    for (int row = 0; row < size; row++) {
+        free(matrix[row]);
+    }
+    free(matrix);
+}
+
+int main(void)
+{
+    int size;
+
+    printf("Enter the size of the matrix: ");
+    scanf("%d", &size);
+
+    if (size < 2 || size > 10) {
+        printf("Invalid size\n");
+        return 1;
+    }
+
+    int **matrix = initialize_matrix(size);
+
+    printf("\nOriginal Matrix:\n");
+    display_matrix(matrix, size);
+
+    rotate_90_degree(matrix, size);
+    printf("Matrix after 90° rotation:\n");
+    display_matrix(matrix, size);
+
+    apply_smoothing(matrix, size);
+    printf("Matrix after smoothing:\n");
+    display_matrix(matrix, size);
+
+    free_matrix(matrix, size);
+    return 0;
 }
