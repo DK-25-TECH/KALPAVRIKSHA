@@ -26,54 +26,60 @@ void displayPerformance(char grade) {
     }
 }
 
-void showProgress(Student s, char (*gradePtr)(float), void (*starPtr)(char)) {
-    int total = s.mark1 + s.mark2 + s.mark3;
-    float average = total / 3.0f;
-    char grade = gradePtr(average);
+void showProgress(Student student, char (*gradePtr)(float), void (*performancePtr)(char)) {
+    int totalMarks = student.mark1 + student.mark2 + student.mark3;
+    float averageMarks = totalMarks / 3.0f;
+    char grade = gradePtr(averageMarks);
 
-    printf("\nROLL NO: %d\nNAME: %s\nTOTAL MARKS: %d\nAVERAGE MARKS: %.2f\nGRADE: %c\n",
-           s.rollNo, s.name, total, average, grade);
-    starPtr(grade);
+    printf("\nROLL NO      : %d\n", student.rollNo);
+    printf("NAME         : %s\n", student.name);
+    printf("TOTAL MARKS  : %d\n", totalMarks);
+    printf("AVERAGE MARKS: %.2f\n", averageMarks);
+    printf("GRADE        : %c\n", grade);
+    performancePtr(grade);
 }
 
-void readStudents(Student *students, int n) {
-    for (int i = 0; i < n; i++) {
-        printf("Enter roll no, name, marks1, marks2, marks3 for student %d: ", i + 1);
+void readStudents(Student *students, int studentCount) {
+    for (int studentIndex = 0; studentIndex < studentCount; studentIndex++) {
+        printf("Enter roll no, name, mark1, mark2, mark3 for student %d: ",
+               studentIndex + 1);
         scanf("%d %24s %d %d %d",
-              &students[i].rollNo,
-              students[i].name,
-              &students[i].mark1,
-              &students[i].mark2,
-              &students[i].mark3);
+              &students[studentIndex].rollNo,
+              students[studentIndex].name,
+              &students[studentIndex].mark1,
+              &students[studentIndex].mark2,
+              &students[studentIndex].mark3);
     }
 }
 
-void printRollNumbers(Student students[], int index, int n) {
-    if (index >= n) return;
-    printf("%d ", students[index].rollNo);
-    printRollNumbers(students, index + 1, n);
+void printRollNumbers(Student students[], int currentIndex, int studentCount) {
+    if (currentIndex >= studentCount)
+        return;
+    printf("%d ", students[currentIndex].rollNo);
+    printRollNumbers(students, currentIndex + 1, studentCount);
 }
 
 int main() {
-    int n;
+    int studentCount;
     int exitCode = 0;
-    printf("Enter number of students: ");
-    scanf("%d", &n);
 
-    Student *students = malloc(n * sizeof(Student));
+    printf("Enter number of students: ");
+    scanf("%d", &studentCount);
+
+    Student *students = malloc(studentCount * sizeof(Student));
 
     if (students) {
-        readStudents(students, n);
+        readStudents(students, studentCount);
 
         printf("\n-- STUDENT ROLL NUMBERS --\n");
-        printRollNumbers(students, 0, n);
+        printRollNumbers(students, 0, studentCount);
         printf("\n");
 
         char (*gradePtr)(float) = calculateGrade;
-        void (*starPtr)(char) = displayPerformance;
+        void (*performancePtr)(char) = displayPerformance;
 
-        for (int i = 0; i < n; i++) {
-            showProgress(students[i], gradePtr, starPtr);
+        for (int studentIndex = 0; studentIndex < studentCount; studentIndex++) {
+            showProgress(students[studentIndex], gradePtr, performancePtr);
         }
 
         free(students);
